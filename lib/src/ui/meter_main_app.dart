@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meter/src/bloc/meter_bloc.dart';
 import 'package:speedometer/speedometer.dart';
@@ -40,6 +41,8 @@ class MeterMainScreenState extends State<MeterMainScreen> {
 
   static const Duration _animationDuration = Duration(milliseconds: 500);
 
+  final FocusNode _focusNode = FocusNode();
+
   RxDart.PublishSubject<double> eventObservable = RxDart.PublishSubject();
 
   @override
@@ -53,7 +56,7 @@ class MeterMainScreenState extends State<MeterMainScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext ctxOrigin) {
     final themeBase = ThemeData();
     ThemeData somTheme = themeBase.copyWith(
         colorScheme: themeBase.colorScheme.copyWith(
@@ -78,14 +81,44 @@ class MeterMainScreenState extends State<MeterMainScreen> {
           BlocProvider(create: (_) => MeterBloc()),
         ],
         child: BlocListener<MeterBloc, MeterState>(
+          listenWhen: (before, current) {
+            if (before.speed != current.speed) {
+              return true;
+            }
+            return false;
+          },
           listener: (context, state) {
             eventObservable.add(state.speedKmh);
           },
-          child: Stack(
+          child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(40.0),
                 child: speedOMeter,
+              ),
+              const Divider(),
+              BlocBuilder<MeterBloc, MeterState>(
+                buildWhen: (before, current) => before.igON != current.igON,
+                builder: (context2, state) {
+                  return KeyboardListener(
+                      focusNode: _focusNode,
+                      onKeyEvent: (key) {
+                        print('key=$key');
+                        if (key is KeyDownEvent) {
+                          switch (key.logicalKey.keyLabel) {
+                            case 'P':
+                            case 'p':
+                              print('power off');
+                              BlocProvider.of<MeterBloc>(context2)
+                                  .add(IgChangeEvent());
+                              break;
+                            default:
+                              break;
+                          }
+                        }
+                      },
+                      child: Text('IG ${state.igON ? 'on' : 'off'}'));
+                },
               ),
             ],
           ),
