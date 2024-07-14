@@ -31,14 +31,14 @@ class MeterMainScreen extends StatefulWidget {
 
 class MeterMainScreenState extends State<MeterMainScreen> {
   int start = 0;
-  int end = 60;
+  int end = 30;
 
   int counter = 0;
 
-  static const double _lowerValue = 40.0;
-  static const double _upperValue = 60.0;
+  static const double _lowerValue = 20.0;
+  static const double _upperValue = 30.0;
 
-  static const Duration _animationDuration = Duration(milliseconds: 100);
+  static const Duration _animationDuration = Duration(milliseconds: 500);
 
   RxDart.PublishSubject<double> eventObservable = RxDart.PublishSubject();
 
@@ -65,21 +65,21 @@ class MeterMainScreenState extends State<MeterMainScreen> {
     var speedOMeter = SpeedOMeter(
         start: start,
         end: end,
-        highlightStart: (_lowerValue / end),
-        highlightEnd: (_upperValue / end),
+        highlightStart: _lowerValue / end,
+        highlightEnd: _upperValue / end,
         themeData: somTheme,
         eventObservable: eventObservable,
         animationDuration: _animationDuration);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("SpeedOMeter")),
+      appBar: AppBar(title: const Text('SpeedOMeter')),
       body: MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => MeterBloc()),
         ],
         child: BlocListener<MeterBloc, MeterState>(
           listener: (context, state) {
-            eventObservable.add(state.speed.toDouble());
+            eventObservable.add(state.speedKmh);
           },
           child: Stack(
             children: [
