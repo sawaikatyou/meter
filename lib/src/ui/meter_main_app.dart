@@ -19,7 +19,6 @@ class MeterMainApp extends StatelessWidget {
 
 @immutable
 class MeterMainScreen extends StatefulWidget {
-
   const MeterMainScreen({super.key, required this.title});
 
   final String title;
@@ -44,9 +43,8 @@ class MeterMainScreenState extends State<MeterMainScreen> {
   @override
   void initState() {
     super.initState();
-    const click = const Duration(milliseconds: 5000);
     var rng = Random();
-    Timer.periodic(click,
+    Timer.periodic(Duration(milliseconds: 5000),
         (Timer t) => eventObservable.add(rng.nextInt(59) + rng.nextDouble()));
   }
 
@@ -66,34 +64,29 @@ class MeterMainScreenState extends State<MeterMainScreen> {
       highlightStart: (_lowerValue / end),
       highlightEnd: (_upperValue / end),
       themeData: somTheme,
-      eventObservable: this.eventObservable,
+      eventObservable: eventObservable,
       animationDuration: _animationDuration,
     );
     return Scaffold(
-        appBar: AppBar(
-          title: Text("SpeedOMeter"),
-        ),
+        appBar: AppBar(title: const Text("SpeedOMeter")),
         body: Column(
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.all(40.0),
-              child: speedOMeter,
+            Padding(padding: const EdgeInsets.all(40.0), child: speedOMeter),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _animationDuration += const Duration(milliseconds: 100);
+                });
+              },
+              child: const Text('Slower...'),
             ),
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  _animationDuration += Duration(milliseconds: 100);
+                  _animationDuration -= const Duration(milliseconds: 100);
                 });
               },
-              child: Text('Slower...'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _animationDuration -= Duration(milliseconds: 100);
-                });
-              },
-              child: Text('Faster!'),
+              child: const Text('Faster!'),
             ),
           ],
         ));
