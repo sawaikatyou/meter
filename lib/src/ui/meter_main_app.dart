@@ -4,9 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meter/src/bloc/meter_bloc.dart';
-import 'package:meter/src/bloc/meter_state.dart';
 import 'package:speedometer/speedometer.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:rxdart/rxdart.dart' as RxDart;
 
 class MeterMainApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -36,12 +35,12 @@ class MeterMainScreenState extends State<MeterMainScreen> {
 
   int counter = 0;
 
-  double _lowerValue = 40.0;
-  double _upperValue = 60.0;
+  static const double _lowerValue = 40.0;
+  static const double _upperValue = 60.0;
 
-  Duration _animationDuration = Duration(milliseconds: 100);
+  static const Duration _animationDuration = Duration(milliseconds: 100);
 
-  PublishSubject<double> eventObservable = PublishSubject();
+  RxDart.PublishSubject<double> eventObservable = RxDart.PublishSubject();
 
   @override
   void initState() {
@@ -55,14 +54,14 @@ class MeterMainScreenState extends State<MeterMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = ThemeData();
-    ThemeData somTheme = theme.copyWith(
-      colorScheme: theme.colorScheme.copyWith(
-        primary: Colors.red,
-        secondary: Colors.black,
-        background: Colors.grey,
-      ),
-    );
+    final themeBase = ThemeData();
+    ThemeData somTheme = themeBase.copyWith(
+        colorScheme: themeBase.colorScheme.copyWith(
+      primary: Colors.red,
+      secondary: Colors.black,
+      background: Colors.grey,
+    ));
+
     var speedOMeter = SpeedOMeter(
         start: start,
         end: end,
@@ -71,25 +70,27 @@ class MeterMainScreenState extends State<MeterMainScreen> {
         themeData: somTheme,
         eventObservable: eventObservable,
         animationDuration: _animationDuration);
+
     return Scaffold(
       appBar: AppBar(title: const Text("SpeedOMeter")),
       body: MultiBlocProvider(
-          providers: [
-            BlocProvider(create: (_) => MeterBloc()),
-          ],
-          child: BlocListener<MeterBloc, MeterState>(
-            listener: (context, state) {
-              eventObservable.add(state.speed.toDouble());
-            },
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(40.0),
-                  child: speedOMeter,
-                ),
-              ],
-            ),
-          )),
+        providers: [
+          BlocProvider(create: (_) => MeterBloc()),
+        ],
+        child: BlocListener<MeterBloc, MeterState>(
+          listener: (context, state) {
+            eventObservable.add(state.speed.toDouble());
+          },
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(40.0),
+                child: speedOMeter,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
