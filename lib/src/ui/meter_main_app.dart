@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:meter/src/bloc/meter_bloc.dart';
+import 'package:meter/src/bloc/meter_state.dart';
 import 'package:speedometer/speedometer.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -43,9 +46,11 @@ class MeterMainScreenState extends State<MeterMainScreen> {
   @override
   void initState() {
     super.initState();
-    var rng = Random();
-    Timer.periodic(Duration(milliseconds: 5000),
-        (Timer t) => eventObservable.add(rng.nextInt(59) + rng.nextDouble()));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -59,36 +64,32 @@ class MeterMainScreenState extends State<MeterMainScreen> {
       ),
     );
     var speedOMeter = SpeedOMeter(
-      start: start,
-      end: end,
-      highlightStart: (_lowerValue / end),
-      highlightEnd: (_upperValue / end),
-      themeData: somTheme,
-      eventObservable: eventObservable,
-      animationDuration: _animationDuration,
-    );
+        start: start,
+        end: end,
+        highlightStart: (_lowerValue / end),
+        highlightEnd: (_upperValue / end),
+        themeData: somTheme,
+        eventObservable: eventObservable,
+        animationDuration: _animationDuration);
     return Scaffold(
-        appBar: AppBar(title: const Text("SpeedOMeter")),
-        body: Column(
-          children: <Widget>[
-            Padding(padding: const EdgeInsets.all(40.0), child: speedOMeter),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _animationDuration += const Duration(milliseconds: 100);
-                });
-              },
-              child: const Text('Slower...'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _animationDuration -= const Duration(milliseconds: 100);
-                });
-              },
-              child: const Text('Faster!'),
-            ),
+      appBar: AppBar(title: const Text("SpeedOMeter")),
+      body: MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => MeterBloc()),
           ],
-        ));
+          child: BlocListener<MeterBloc, MeterState>(
+            listener: (context, state) {
+              eventObservable.add(state.speed.toDouble());
+            },
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: speedOMeter,
+                ),
+              ],
+            ),
+          )),
+    );
   }
 }
