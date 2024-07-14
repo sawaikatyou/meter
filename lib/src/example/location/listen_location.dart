@@ -1,4 +1,5 @@
 import 'dart:async';
+import  'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,9 +63,14 @@ class _ListenLocationState extends State<ListenLocationWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Listen location: ${_error ?? '${_location ?? "unknown"}'}',
+          'Listen location: ${_error ?? '${_location?.speed?.floor() ?? ''}m/s'
+              ' Accuracy=${_location?.speedAccuracy ?? ''}' ?? "unknown"}',
           style: Theme.of(context).textTheme.bodyLarge,
         ),
+        // Text(
+        //   'Listen location: ${_error ?? '${_location ?? "unknown"}'}',
+        //   style: Theme.of(context).textTheme.bodyLarge,
+        // ),
         Row(
           children: <Widget>[
             Container(
