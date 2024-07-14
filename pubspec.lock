@@ -139,6 +139,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.0"
+  rxdart:
+    dependency: transitive
+    description:
+      name: rxdart
+      sha256: "5c3004a4a8dbb94bd4bf5412a4def4acdaa12e12f269737a5751369e12d1a962"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.28.0"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -152,6 +160,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.0"
+  speedometer:
+    dependency: "direct main"
+    description:
+      name: speedometer
+      sha256: "1b979bc2272083e310528f3c39e6023da7d3003eb4115724d344a927f7accc3c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   stack_trace:
     dependency: transitive
     description:
