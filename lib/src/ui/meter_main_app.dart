@@ -36,8 +36,8 @@ class MeterMainScreenState extends State<MeterMainScreen> {
 
   int counter = 0;
 
-  double _lowerValue = 20.0;
-  double _upperValue = 40.0;
+  double _lowerValue = 40.0;
+  double _upperValue = 60.0;
 
   Duration _animationDuration = Duration(milliseconds: 100);
 
@@ -58,7 +58,7 @@ class MeterMainScreenState extends State<MeterMainScreen> {
     final ThemeData theme = ThemeData();
     ThemeData somTheme = theme.copyWith(
       colorScheme: theme.colorScheme.copyWith(
-        primary: Colors.blue,
+        primary: Colors.red,
         secondary: Colors.black,
         background: Colors.grey,
       ),

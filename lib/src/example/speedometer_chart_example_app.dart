@@ -20,12 +20,12 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    double value = 40;
+    double value = 20;
 
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('PluginXXX example app'),
         ),
         body: Center(
           child: Wrap(
@@ -35,25 +35,10 @@ class _MyAppState extends State<MyApp> {
             children: [
               SpeedometerChart(
                 value: value,
-                graphColor: const [Colors.blueAccent, Colors.lightBlueAccent],
-              ),
-              SpeedometerChart.tick(
-                value: value,
-              ),
-              SpeedometerChart.tick(
-                value: value,
-                valueWidget: Text(value.toString()),
-                hasTickSpace: true,
-                hasIconPointer: false,
-              ),
-              SpeedometerChart(
-                value: value,
-                valueWidget: Text(value.toString()),
-                hasIconPointer: false,
-                pointerColor: Colors.tealAccent,
-                graphColor: const [Colors.deepPurple, Colors.orange],
-                minWidget: const Text("Min value: 0"),
-                maxWidget: const Text("Max value: 100"),
+                graphColor: const [Colors.blue, Colors.lightBlueAccent],
+                hasIconPointer: true,
+                pointerColor: Colors.red,
+                valueWidget: Text('${value.toDouble()}'),
               ),
             ],
           ),
