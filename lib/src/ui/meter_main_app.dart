@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health/health.dart';
 import 'package:meter/src/bloc/key_translate_bloc.dart';
 import 'package:meter/src/bloc/meter_main_bloc.dart';
 import 'package:speedometer/speedometer.dart';
@@ -52,42 +51,40 @@ class MeterMainScreenState extends State<MeterMainScreen> {
   @override
   void initState() {
     super.initState();
+
+    // TODO: 心拍数対応
+    // Health().requestAuthorization([HealthDataType.HEART_RATE]).then(
+    //     (bool result) async {
+    //   if (!result) {
+    //     return;
+    //   }
+    //   var types = [HealthDataType.HEART_RATE];
+    //   var now = DateTime.now();
+    //   final yesterday = now.subtract(Duration(hours: 24));
     //
-
-    // define the types to get
-
-    Health().requestAuthorization([HealthDataType.HEART_RATE]).then(
-        (bool result) async {
-      if (!result) {
-        return;
-      }
-      var types = [HealthDataType.HEART_RATE];
-      var now = DateTime.now();
-      final yesterday = now.subtract(Duration(hours: 24));
-
-      // request permissions to write steps and blood glucose
-      types = [HealthDataType.STEPS, HealthDataType.BLOOD_GLUCOSE];
-      var permissions = [
-        HealthDataAccess.READ_WRITE,
-        HealthDataAccess.READ_WRITE
-      ];
-      final permissionResult =
-          await Health().requestAuthorization(types, permissions: permissions);
-      if (!permissionResult) {
-        return;
-      }
-
-      // try {
-      // fetch health data
-      List<HealthDataPoint> healthData = await Health().getHealthDataFromTypes(
-        types: types,
-        startTime: yesterday,
-        endTime: now,
-      );
-
-      debugPrint('Total number of data points: ${healthData.length}. '
-          '${healthData.length > 100 ? 'Only showing the first 100.' : ''}');
-    });
+    //   // request permissions to write steps and blood glucose
+    //   types = [HealthDataType.STEPS, HealthDataType.BLOOD_GLUCOSE];
+    //   var permissions = [
+    //     HealthDataAccess.READ_WRITE,
+    //     HealthDataAccess.READ_WRITE
+    //   ];
+    //   final permissionResult =
+    //       await Health().requestAuthorization(types, permissions: permissions);
+    //   if (!permissionResult) {
+    //     return;
+    //   }
+    //
+    //   // try {
+    //   // fetch health data
+    //   List<HealthDataPoint> healthData = await Health().getHealthDataFromTypes(
+    //     types: types,
+    //     startTime: yesterday,
+    //     endTime: now,
+    //   );
+    //
+    //   debugPrint('Total number of data points: ${healthData.length}. '
+    //       '${healthData.length > 100 ? 'Only showing the first 100.' : ''}');
+    // });
   }
 
   @override
