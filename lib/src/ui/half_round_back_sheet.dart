@@ -39,8 +39,22 @@ class HalfCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()..color = Colors.black87.withOpacity(0.5);
-    canvas.drawCircle(Offset(size.width / 2, size.height),
-        (size.width / 2) + (size.width / 10), p);
+
+    final longSide = math.max(size.width, size.height);
+    final circleTop = size.height * 0.1;
+    final twoSize = size.height * 0.2;
+    print('longside=$longSide width=${size.width} height=${size.height}');
+
+    canvas.drawArc(Rect.fromLTWH(0, circleTop, longSide / 2, twoSize),
+        math.pi, math.pi, true, p);
+    canvas.drawRect(
+        Rect.fromLTWH(0, size.height * 0.2, size.width, size.height), p);
+
+    // rev2
+    // canvas.drawCircle(Offset(size.width /2, size.height * 0.2), longSide * 0.1, p2);
+    // rev1
+    // canvas.drawCircle(Offset(size.width / 2, size.height),
+    //     size.width * 0.1, p);
   }
 
   @override
