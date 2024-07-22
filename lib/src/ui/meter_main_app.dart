@@ -1,14 +1,9 @@
-import 'dart:async';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meter/src/bloc/key_translate_bloc.dart';
 import 'package:meter/src/bloc/meter_main_bloc.dart';
-import 'package:speedometer/speedometer.dart';
-import 'package:rxdart/rxdart.dart' as RxDart;
 
+import 'digital_speed_o_meter.dart';
 import 'half_round_back_sheet.dart';
 
 class MeterMainApp extends StatelessWidget {
@@ -33,20 +28,9 @@ class MeterMainScreen extends StatefulWidget {
 }
 
 class MeterMainScreenState extends State<MeterMainScreen> {
-  int start = 0;
-  int end = 30;
-
-  int counter = 0;
-
-  static const double _lowerValue = 20.0;
-  static const double _upperValue = 30.0;
-
-  static const Duration _animationDuration = Duration(milliseconds: 500);
+  static const kWinkerSize = 48.0;
 
   final FocusNode _focusNode = FocusNode();
-
-  RxDart.PublishSubject<double> SpeedEventObservable = RxDart.PublishSubject();
-  RxDart.PublishSubject<double> TacoEventObservable = RxDart.PublishSubject();
 
   @override
   void initState() {
@@ -95,49 +79,23 @@ class MeterMainScreenState extends State<MeterMainScreen> {
   @override
   Widget build(BuildContext context) {
     final Size screenSize = MediaQuery.of(context).size;
-    const padding = 10.0;
-    final halfWidth = screenSize.width * 0.3;
-    final halfHeight = screenSize.height * 0.5;
-    final meterScale = halfWidth - padding * 2;
-    final centerPoint = halfHeight - (screenSize.height / 6) + padding;
-    final winkerPoint = centerPoint - (screenSize.height / 4);
-    final leftPoint1 = (screenSize.width * 0.1) + padding;
-    final leftPoint2 = (screenSize.width * 0.6) + padding;
+
+    // ウインカー用定義値
+    final winkerPadding = screenSize.width / 100;
+    final rightWinkerPosition =
+        (screenSize.width - kWinkerSize - winkerPadding);
+    final leftWinkerPosition = winkerPadding;
+    const kWinkerTopBaseLine = 100.0;
+
+    // メーター用描画定義
+    const kMeterTopBaseLine = kWinkerTopBaseLine + kWinkerSize;
+    final meterRightBaseLine = screenSize.width * 0.1;
+    final meterBaseWidth = screenSize.width / 6;
+    final meterBaseHeight = screenSize.height / 2;
+    const kMeterInnerPadding = 10.0;
+    final meterSize = meterBaseWidth + kMeterInnerPadding;
 
     print('size=${screenSize.width} / ${screenSize.height}');
-
-    final themeBase = ThemeData();
-    ThemeData speedTheme = themeBase.copyWith(
-        colorScheme: themeBase.colorScheme.copyWith(
-      primary: Colors.red,
-      secondary: Colors.black,
-      background: Colors.grey,
-    ));
-
-    var speedOMeter = SpeedOMeter(
-        start: start,
-        end: end,
-        highlightStart: _lowerValue / end,
-        highlightEnd: _upperValue / end,
-        themeData: speedTheme,
-        eventObservable: SpeedEventObservable,
-        animationDuration: _animationDuration);
-
-    ThemeData tacoTheme = themeBase.copyWith(
-        colorScheme: themeBase.colorScheme.copyWith(
-      primary: Colors.red,
-      secondary: Colors.black,
-      background: Colors.grey,
-    ));
-
-    var tacoMeter = SpeedOMeter(
-        start: start,
-        end: end,
-        highlightStart: _lowerValue / end,
-        highlightEnd: _upperValue / end,
-        themeData: tacoTheme,
-        eventObservable: TacoEventObservable,
-        animationDuration: _animationDuration);
 
     return MultiBlocProvider(
       providers: [
@@ -147,14 +105,12 @@ class MeterMainScreenState extends State<MeterMainScreen> {
         listeners: [
           BlocListener<MeterMainBloc, MeterMainState>(
               listenWhen: (before, current) {
-            if (before.speedKmh != current.speedKmh) {
-              return true;
-            }
-            return false;
-          }, listener: (context, state) {
-            SpeedEventObservable.add(state.speedKmh);
-            TacoEventObservable.add(state.speedKmh);
-          }),
+                if (before.speedKmh != current.speedKmh) {
+                  return true;
+                }
+                return false;
+              },
+              listener: (context, state) {}),
         ],
         child: Scaffold(
           body: MultiBlocProvider(
@@ -173,18 +129,63 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                   child: Stack(
                     children: [
                       const HalfRoundBackSheet(),
+
+                      // メーター 100の桁
                       Positioned(
-                          left: leftPoint1,
-                          top: centerPoint,
-                          width: meterScale,
-                          height: meterScale,
-                          child: speedOMeter),
+                          left: meterRightBaseLine,
+                          top: kMeterTopBaseLine,
+                          child: DigitalSpeedOMeterPaint(
+                            width: meterBaseWidth,
+                            height: meterBaseHeight,
+                            color: Colors.green,
+                            index: 0,
+                          )),
+
+                      // メーター 10の桁
                       Positioned(
-                          left: leftPoint2,
-                          top: centerPoint,
-                          width: meterScale,
-                          height: meterScale,
-                          child: tacoMeter),
+                          left: meterRightBaseLine + meterSize,
+                          top: kMeterTopBaseLine,
+                          child: DigitalSpeedOMeterPaint(
+                            width: meterBaseWidth,
+                            height: meterBaseHeight,
+                            color: Colors.green,
+                            index: 1,
+                          )),
+
+                      // メーター 1の桁
+                      Positioned(
+                          left: meterRightBaseLine + (meterSize * 2),
+                          top: kMeterTopBaseLine,
+                          child: DigitalSpeedOMeterPaint(
+                            width: meterBaseWidth,
+                            height: meterBaseHeight,
+                            color: Colors.green,
+                            index: 2,
+                          )),
+
+                      // メーター　小数点のドット
+                      Positioned(
+                          left: meterRightBaseLine +
+                              (meterSize * 3) +
+                              (kMeterInnerPadding / 2),
+                          top: kMeterTopBaseLine +
+                              meterBaseHeight -
+                              kMeterInnerPadding * 2,
+                          child: const DigitalSpeedOMeterDot()),
+
+                      Positioned(
+                          left: meterRightBaseLine +
+                              (meterSize * 3) +
+                              kMeterInnerPadding * 4,
+                          top: kMeterTopBaseLine,
+                          child: DigitalSpeedOMeterPaint(
+                            width: meterBaseWidth,
+                            height: meterBaseHeight,
+                            color: Colors.green,
+                            index: 3,
+                          )),
+
+                      // IG-ON / off label
                       Positioned(
                         left: screenSize.width - 60,
                         top: screenSize.height - 35,
@@ -192,23 +193,30 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                           buildWhen: (before, current) =>
                               before.igON != current.igON,
                           builder: (context2, state) {
-                            return Container(
-                              color: Colors.white,
-                              child: Text(
-                                'IG ${state.igON ? 'on' : 'off'}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24,
+                            return GestureDetector(
+                              onTap: () {
+                                BlocProvider.of<MeterMainBloc>(context)
+                                    .add(IgChangeEvent());
+                              },
+                              child: Container(
+                                color: Colors.white,
+                                child: Text(
+                                  'IG ${state.igON ? 'on' : 'off'}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
                                 ),
                               ),
                             );
                           },
                         ),
                       ),
+
                       // 右側ウインカー
                       Positioned(
-                        left: leftPoint2 + (meterScale * 0.6),
-                        top: winkerPoint,
+                        left: rightWinkerPosition,
+                        top: kWinkerTopBaseLine,
                         child: Container(
                           decoration: BoxDecoration(
                             color: state.winkerRightOn
@@ -220,13 +228,14 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                               color: state.winkerRightOn
                                   ? Colors.green
                                   : Colors.black,
-                              size: 48),
+                              size: kWinkerSize),
                         ),
                       ),
+
                       // 左側ウインカー
                       Positioned(
-                        left: leftPoint1 + (meterScale * 0.1),
-                        top: winkerPoint,
+                        left: leftWinkerPosition,
+                        top: kWinkerTopBaseLine,
                         child: Container(
                           decoration: BoxDecoration(
                             color: state.winkerLeftOn
@@ -238,7 +247,7 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                               color: state.winkerLeftOn
                                   ? Colors.green
                                   : Colors.black,
-                              size: 48),
+                              size: kWinkerSize),
                         ),
                       ),
                     ],
