@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logging/logging.dart';
 import 'package:meter/src/bloc/key_translate_bloc.dart';
 import 'package:meter/src/bloc/meter_main_bloc.dart';
 
 import 'digital_speed_o_meter.dart';
 import 'half_round_back_sheet.dart';
+
+final _logger = Logger('MeterMainApp');
 
 class MeterMainApp extends StatelessWidget {
   const MeterMainApp({super.key});
@@ -95,7 +98,7 @@ class MeterMainScreenState extends State<MeterMainScreen> {
     const kMeterInnerPadding = 10.0;
     final meterSize = meterBaseWidth + kMeterInnerPadding;
 
-    print('size=${screenSize.width} / ${screenSize.height}');
+    _logger.info('size=${screenSize.width} / ${screenSize.height}');
 
     return MultiBlocProvider(
       providers: [

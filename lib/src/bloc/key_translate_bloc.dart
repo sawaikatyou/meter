@@ -1,8 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
+import 'package:logging/logging.dart';
 
 import 'meter_main_bloc.dart';
+
+final _logger = Logger('KeyTranslateBloc');
 
 abstract class MeterEvent {}
 
@@ -26,7 +29,7 @@ class KeyTranslateBloc extends Bloc<MeterEvent, TranslateState> {
 
     on<HardwareKeyBoardEvent>((event, emit) {
       final key = event.keyEvent;
-      print('key=$key');
+      _logger.info('key=$key');
       if (key is KeyDownEvent) {
         final keyLabel = key.logicalKey.keyLabel.toUpperCase();
 
