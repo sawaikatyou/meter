@@ -134,33 +134,33 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                       Positioned(
                           left: meterRightBaseLine,
                           top: kMeterTopBaseLine,
-                          child: DigitalSpeedOMeterPaint(
+                          child: DigitalSpeedOMeter(
                             width: meterBaseWidth,
                             height: meterBaseHeight,
                             color: Colors.green,
-                            index: 0,
+                            offset: const Offset(0, 6),
                           )),
 
                       // メーター 10の桁
                       Positioned(
                           left: meterRightBaseLine + meterSize,
                           top: kMeterTopBaseLine,
-                          child: DigitalSpeedOMeterPaint(
+                          child: DigitalSpeedOMeter(
                             width: meterBaseWidth,
                             height: meterBaseHeight,
                             color: Colors.green,
-                            index: 1,
+                            offset: const Offset(7, 13),
                           )),
 
                       // メーター 1の桁
                       Positioned(
                           left: meterRightBaseLine + (meterSize * 2),
                           top: kMeterTopBaseLine,
-                          child: DigitalSpeedOMeterPaint(
+                          child: DigitalSpeedOMeter(
                             width: meterBaseWidth,
                             height: meterBaseHeight,
                             color: Colors.green,
-                            index: 2,
+                            offset: const Offset(14, 20),
                           )),
 
                       // メーター　小数点のドット
@@ -171,18 +171,18 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                           top: kMeterTopBaseLine +
                               meterBaseHeight -
                               kMeterInnerPadding * 2,
-                          child: const DigitalSpeedOMeterDot()),
+                          child: const DigitalSpeedOMeterDot(index: 21)),
 
                       Positioned(
                           left: meterRightBaseLine +
                               (meterSize * 3) +
                               kMeterInnerPadding * 4,
                           top: kMeterTopBaseLine,
-                          child: DigitalSpeedOMeterPaint(
+                          child: DigitalSpeedOMeter(
                             width: meterBaseWidth,
                             height: meterBaseHeight,
                             color: Colors.green,
-                            index: 3,
+                            offset: const Offset(22, 29),
                           )),
 
                       // IG-ON / off label

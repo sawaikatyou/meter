@@ -21,6 +21,8 @@ class _InnerSpeedUpdated extends MeterEvent {
   MeterMainState nextState;
 }
 
+class _InnerTestCounted extends MeterEvent {}
+
 class MeterMainState {
   const MeterMainState(
     this.speedKmh,
@@ -34,14 +36,14 @@ class MeterMainState {
   final bool igON;
   final bool winkerLeftOn;
   final bool winkerRightOn;
-  final List<List<bool>> digitalMeterInformation;
+  final List<bool> digitalMeterInformation;
 
   MeterMainState copyWith({
     double? speedKmh,
     bool? igOn,
     bool? winkerLeftOn,
     bool? winkerRightOn,
-    List<List<bool>>? digitalMeterInformation,
+    List<bool>? digitalMeterInformation,
   }) {
     return MeterMainState(
       speedKmh ?? this.speedKmh,
@@ -56,6 +58,13 @@ class MeterMainState {
 class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
   final Location location = Location();
   StreamSubscription<LocationData>? _locationSubscription;
+
+  static const kDigitsCount = 4;
+  static const kOneDigitValues = 7;
+  static const kDecimalPoint = 1;
+
+  static const kDigitalInformationMax =
+      (kDigitsCount * kOneDigitValues) + kDecimalPoint;
 
   MeterMainBloc() : super(const MeterMainState(0.0, false, false, false, [])) {
     on<_InitEvent>((event, emit) {
@@ -72,30 +81,23 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
       });
     });
 
-    List<List<bool>> makeInformation({bool? newValue}) {
-      // TODO: ここにしかるべき処理を作る
-      // TODO: 現状は単に ig on / off で全部つけてるだけ
+    // TODO: ここにしかるべき処理を作る
+    // TODO: 現状は単に ig on / off で全部つけてるだけ
+    List<bool> fillInformation({bool? newValue}) {
       bool value = newValue ?? state.igON;
-      List<List<bool>> result = [];
-      print('[sasaki] makeInformation() ${state.igON}');
+      List<bool> result = [];
 
-      for (int i = 0; i < 4; i++) {
-        List<bool> parameter = <bool>[];
-        for (int j = 0; j < 7; j++) {
-          parameter.add(value);
-        }
-        result.add(parameter);
+      for (int i = 0; i < kDigitalInformationMax; i++) {
+        result.add(value);
       }
 
       return result;
     }
 
     on<_InnerSpeedUpdated>((event, emit) {
-      final information = makeInformation();
       emit(
         state.copyWith(
           speedKmh: event.nextState.speedKmh,
-          digitalMeterInformation: information,
         ),
       );
     });
@@ -117,12 +119,53 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
     });
 
     on<IgChangeEvent>((event, emit) {
+      final igonNewStatus = !state.igON;
       emit(state.copyWith(
-        igOn: !state.igON,
-        digitalMeterInformation: makeInformation(newValue: !state.igON),
+        igOn: igonNewStatus,
+        digitalMeterInformation: fillInformation(newValue: false),
+      ));
+      if (igonNewStatus) {
+        timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+          add(_InnerTestCounted());
+        });
+      } else {
+        timer?.cancel();
+        count = 0;
+      }
+    });
+
+    on<_InnerTestCounted>((event, emit) {
+      var newInfo = state.digitalMeterInformation;
+
+      if (count > kDigitalInformationMax - 1) {
+        count = 0;
+        newInfo = fillInformation(newValue: false);
+      }
+      newInfo[count] = true;
+      if (count > 0) {
+        newInfo[count - 1] = false;
+      }
+      count++;
+
+      final buf = StringBuffer();
+      buf.write('[');
+      for (final e in newInfo) {
+        if (e == true) {
+          buf.write('*');
+        } else {
+          buf.write(' ');
+        }
+      }
+      buf.write(']');
+
+      emit(state.copyWith(
+        digitalMeterInformation: newInfo,
       ));
     });
 
     add(_InitEvent());
   }
+
+  Timer? timer;
+  int count = 0;
 }
