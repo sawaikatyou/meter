@@ -9,72 +9,62 @@ import 'package:meter/src/bloc/meter_main_bloc.dart';
 
 import 'key_translate_bloc_test.mocks.dart';
 
-class MockMeterMainBloc extends MockBloc<MeterEvent, MeterMainState>
-    implements MeterMainBloc {
-  final List<MeterEvent> values = [];
-
-  @override
-  void add(MeterEvent e) {
-    values.add(e);
-  }
-
-  void verifyRuntimeType(MeterEvent expectedCallEvent) {
-    expect(values.first.runtimeType, expectedCallEvent.runtimeType);
-  }
-}
-
 @GenerateMocks([KeyDownEvent])
 void main() {
-// Create a mock instance
-  late MockMeterMainBloc meterBloc;
+  setUp(() {});
 
-  late MockKeyDownEvent mockI, mockRight, mockLeft;
+  group('MeterMainBloc', () {
+    int fetchOne(double speedKmh) {
+      var temp = speedKmh;
+      if (speedKmh < 100) {
+        return -1;
+      }
+      if (speedKmh > 1000) {
+        temp = speedKmh % 1000;
+      }
+      return (temp / 100).toInt();
+    }
 
-  setUp(() {
-    meterBloc = MockMeterMainBloc();
+    int fetchTwo(double speedKmh) {
+      var temp = speedKmh;
+      if (speedKmh < 10) {
+        return -1;
+      }
+      if (speedKmh > 100) {
+        temp = speedKmh % 100;
+      }
+      return (temp / 10).toInt();
+    }
 
-    mockI = MockKeyDownEvent();
-    when(mockI.logicalKey).thenReturn(LogicalKeyboardKey.keyI);
+    int fetchThree(double speedKmh) {
+      var temp = speedKmh;
+      if (speedKmh > 10) {
+        temp = speedKmh % 10;
+      }
+      return temp.toInt();
+    }
 
-    mockRight = MockKeyDownEvent();
-    when(mockRight.logicalKey).thenReturn(LogicalKeyboardKey.arrowRight);
+    int fetchMinor(double speedKmh) {
+      var temp = speedKmh;
+      if (speedKmh > 1) {
+        temp = speedKmh % 1;
+      }
+      temp = (temp * 10.0);
+      return temp.ceil().toInt();
+    }
 
-    mockLeft = MockKeyDownEvent();
-    when(mockLeft.logicalKey).thenReturn(LogicalKeyboardKey.arrowLeft);
-  });
+    test('test', () {
+      // final speedSample = 2123.45678;
+      final speedSample = 456.7;
 
-  group('CounterBloc', () {
-    blocTest(
-      'emits [] when nothing is added',
-      build: () => KeyTranslateBloc(meterBloc),
-      expect: () => [],
-    );
-
-    blocTest(
-      'key I',
-      build: () => KeyTranslateBloc(meterBloc),
-      act: (bloc) => bloc.add(HardwareKeyBoardEvent(mockI)),
-      verify: (bloc) {
-        meterBloc.verifyRuntimeType(IgChangeEvent());
-      },
-    );
-
-    blocTest(
-      'key ARROW_LEFT',
-      build: () => KeyTranslateBloc(meterBloc),
-      act: (bloc) => bloc.add(HardwareKeyBoardEvent(mockLeft)),
-      verify: (bloc) {
-        meterBloc.verifyRuntimeType(WinkerLeftEvent());
-      },
-    );
-
-    blocTest(
-      'key ARROW_RIGHT',
-      build: () => KeyTranslateBloc(meterBloc),
-      act: (bloc) => bloc.add(HardwareKeyBoardEvent(mockRight)),
-      verify: (bloc) {
-        meterBloc.verifyRuntimeType(WinkerRightEvent());
-      },
-    );
+      final one = fetchOne(speedSample);
+      expect(one, 4);
+      final two = fetchTwo(speedSample);
+      expect(two, 5);
+      final three = fetchThree(speedSample);
+      expect(three, 6);
+      final minor = fetchMinor(speedSample);
+      expect(minor, 7);
+    });
   });
 }

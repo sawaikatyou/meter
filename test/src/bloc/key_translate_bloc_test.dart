@@ -43,7 +43,7 @@ void main() {
     when(mockLeft.logicalKey).thenReturn(LogicalKeyboardKey.arrowLeft);
   });
 
-  group('CounterBloc', () {
+  group('KeyTranslateBloc', () {
     blocTest(
       'emits [] when nothing is added',
       build: () => KeyTranslateBloc(meterBloc),

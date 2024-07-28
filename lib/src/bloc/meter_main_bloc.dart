@@ -5,6 +5,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
+import 'package:logging/logging.dart';
+
+final _logger = Logger('MeterMainBloc');
 
 class MeterEvent implements Equatable {
   @override
@@ -91,6 +94,89 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
   static const kDigitalInformationMax =
       (kDigitsCount * kOneDigitValues) + kDecimalPoint;
 
+  static const kPatternOff = [false, false, false, false, false, false, false];
+  static const kPattern0 = [true, true, true, false, true, true, true];
+  static const kPattern1 = [false, false, true, false, false, true, false];
+  static const kPattern2 = [true, false, true, true, true, false, true];
+  static const kPattern3 = [true, false, true, true, false, true, true];
+  static const kPattern4 = [false, true, true, true, false, true, false];
+  static const kPattern5 = [true, true, false, true, false, true, true];
+  static const kPattern6 = [true, true, false, true, true, true, true];
+  static const kPattern7 = [true, true, true, false, false, true, false];
+  static const kPattern8 = [true, true, true, true, true, true, true];
+  static const kPattern9 = [true, true, true, true, false, true, true];
+
+  // 100の桁を取得
+  int fetchOne(double speedKmh) {
+    var temp = speedKmh;
+    if (speedKmh < 100) {
+      return -1;
+    }
+    if (speedKmh > 1000) {
+      temp = speedKmh % 1000;
+    }
+    return (temp / 100).toInt();
+  }
+
+  // 10の桁を取得
+  int fetchTwo(double speedKmh) {
+    var temp = speedKmh;
+    if (speedKmh < 10) {
+      return -1;
+    }
+    if (speedKmh > 100) {
+      temp = speedKmh % 100;
+    }
+    return (temp / 10).toInt();
+  }
+
+  // 1の桁を取得
+  int fetchThree(double speedKmh) {
+    var temp = speedKmh;
+    if (speedKmh > 10) {
+      temp = speedKmh % 10;
+    }
+    return temp.toInt();
+  }
+
+  // 小数点の1桁目を取得
+  int fetchMinor(double speedKmh) {
+    var temp = speedKmh;
+    if (speedKmh > 1) {
+      temp = speedKmh % 1;
+    }
+    temp = (temp * 10.0);
+    return temp.ceil().toInt();
+  }
+
+  List<bool> makeInformation({double input = 0.0}) {
+    final result = <bool>[];
+    final value100 = fetchOne(input);
+    final value010 = fetchTwo(input);
+    final value001 = fetchThree(input);
+    final valueDot = fetchMinor(input);
+    final Map<int, List<bool>> parameters = {
+      0: kPattern0,
+      1: kPattern1,
+      2: kPattern2,
+      3: kPattern3,
+      4: kPattern4,
+      5: kPattern5,
+      6: kPattern6,
+      7: kPattern7,
+      8: kPattern8,
+      9: kPattern9,
+    };
+
+    result.addAll(parameters[value100] ?? kPatternOff);
+    result.addAll(parameters[value010] ?? kPatternOff);
+    result.addAll(parameters[value001] ?? kPatternOff);
+    result.add(true);
+    result.addAll(parameters[valueDot] ?? kPatternOff);
+
+    return result;
+  }
+
   MeterMainBloc() : super(const MeterMainState(0.0, false, false, false, [])) {
     on<_InitEvent>((event, emit) {
       // speed 監視
@@ -101,12 +187,18 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
         final speedMps = currentLocation.speed;
         if (speedMps != null) {
           final speedKmh = (speedMps * 3600) / 1000;
-          add(_InnerSpeedUpdated(state.copyWith(speedKmh: speedKmh)));
+          final info = makeInformation(input: speedKmh);
+
+          _logger.info('speedKmh=$speedKmh');
+
+          add(_InnerSpeedUpdated(state.copyWith(
+            speedKmh: speedKmh,
+            digitalMeterInformation: info,
+          )));
         }
       });
     });
 
-    // TODO: ここにしかるべき処理を作る
     // TODO: 現状は単に ig on / off で全部つけてるだけ
     List<bool> fillInformation({bool? newValue}) {
       bool value = newValue ?? state.igON;
@@ -123,6 +215,7 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
       emit(
         state.copyWith(
           speedKmh: event.nextState.speedKmh,
+          digitalMeterInformation: event.nextState.digitalMeterInformation,
         ),
       );
     });
@@ -147,8 +240,9 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
       final igonNewStatus = !state.igON;
       emit(state.copyWith(
         igOn: igonNewStatus,
-        digitalMeterInformation: fillInformation(newValue: false),
+        digitalMeterInformation: fillInformation(newValue: igonNewStatus),
       ));
+
       if (igonNewStatus) {
         timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
           add(_InnerTestCounted());
