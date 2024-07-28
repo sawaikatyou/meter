@@ -11,28 +11,16 @@ class MeterEvent implements Equatable {
   bool? get stringify => true;
 
   @override
-  List<Object?> get props => ['MeterEvent'];
+  List<Object?> get props => [];
 }
 
-class _InitEvent extends MeterEvent {
-  @override
-  List<Object?> get props => ['_InitEvent'];
-}
+class _InitEvent extends MeterEvent {}
 
-class IgChangeEvent extends MeterEvent {
-  @override
-  List<Object?> get props => ['IgChangeEvent'];
-}
+class IgChangeEvent extends MeterEvent {}
 
-class WinkerRightEvent extends MeterEvent {
-  @override
-  List<Object?> get props => ['WinkerRightEvent'];
-}
+class WinkerRightEvent extends MeterEvent {}
 
-class WinkerLeftEvent extends MeterEvent {
-  @override
-  List<Object?> get props => ['WinkerLeftEvent'];
-}
+class WinkerLeftEvent extends MeterEvent {}
 
 class _InnerSpeedUpdated extends MeterEvent {
   _InnerSpeedUpdated(this.nextState);
@@ -40,7 +28,7 @@ class _InnerSpeedUpdated extends MeterEvent {
   MeterMainState nextState;
 
   @override
-  List<Object?> get props => [nextState];
+  List<Object?> get props => [super.props, nextState];
 }
 
 class _InnerTestCounted extends MeterEvent {

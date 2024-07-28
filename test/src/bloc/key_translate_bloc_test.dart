@@ -18,7 +18,7 @@ class MockMeterMainBloc extends MockBloc<MeterEvent, MeterMainState>
     values.add(e);
   }
 
-  void verify(MeterEvent expectedCallEvent) {
+  void verifyRuntimeType(MeterEvent expectedCallEvent) {
     expect(values.first.runtimeType, expectedCallEvent.runtimeType);
   }
 }
@@ -28,12 +28,19 @@ void main() {
 // Create a mock instance
   late MockMeterMainBloc meterBloc;
 
-  late MockKeyDownEvent mockI;
+  late MockKeyDownEvent mockI, mockRight, mockLeft;
 
   setUp(() {
-    mockI = MockKeyDownEvent();
     meterBloc = MockMeterMainBloc();
+
+    mockI = MockKeyDownEvent();
     when(mockI.logicalKey).thenReturn(LogicalKeyboardKey.keyI);
+
+    mockRight = MockKeyDownEvent();
+    when(mockRight.logicalKey).thenReturn(LogicalKeyboardKey.arrowRight);
+
+    mockLeft = MockKeyDownEvent();
+    when(mockLeft.logicalKey).thenReturn(LogicalKeyboardKey.arrowLeft);
   });
 
   group('CounterBloc', () {
@@ -48,7 +55,25 @@ void main() {
       build: () => KeyTranslateBloc(meterBloc),
       act: (bloc) => bloc.add(HardwareKeyBoardEvent(mockI)),
       verify: (bloc) {
-        meterBloc.verify(IgChangeEvent());
+        meterBloc.verifyRuntimeType(IgChangeEvent());
+      },
+    );
+
+    blocTest(
+      'key ARROW_LEFT',
+      build: () => KeyTranslateBloc(meterBloc),
+      act: (bloc) => bloc.add(HardwareKeyBoardEvent(mockLeft)),
+      verify: (bloc) {
+        meterBloc.verifyRuntimeType(WinkerLeftEvent());
+      },
+    );
+
+    blocTest(
+      'key ARROW_RIGHT',
+      build: () => KeyTranslateBloc(meterBloc),
+      act: (bloc) => bloc.add(HardwareKeyBoardEvent(mockRight)),
+      verify: (bloc) {
+        meterBloc.verifyRuntimeType(WinkerRightEvent());
       },
     );
   });
