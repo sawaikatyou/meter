@@ -1,14 +1,17 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
+import 'package:logging/logging.dart';
 
 import 'meter_main_bloc.dart';
 
-abstract class MeterEvent {}
+final _logger = Logger('KeyTranslateBloc');
 
-class _InitEvent extends MeterEvent {}
+abstract class KeyTranslateEvent {}
 
-class HardwareKeyBoardEvent extends MeterEvent {
+class _InitEvent extends KeyTranslateEvent {}
+
+class HardwareKeyBoardEvent extends KeyTranslateEvent {
   HardwareKeyBoardEvent(this.keyEvent);
 
   KeyEvent keyEvent;
@@ -18,27 +21,27 @@ class TranslateState {
   const TranslateState();
 }
 
-class KeyTranslateBloc extends Bloc<MeterEvent, TranslateState> {
-  final MeterMainBloc meterbloc;
+class KeyTranslateBloc extends Bloc<KeyTranslateEvent, TranslateState> {
+  final MeterMainBloc meterBloc;
 
-  KeyTranslateBloc(this.meterbloc) : super(const TranslateState()) {
+  KeyTranslateBloc(this.meterBloc) : super(const TranslateState()) {
     on<_InitEvent>((event, emit) {});
 
     on<HardwareKeyBoardEvent>((event, emit) {
       final key = event.keyEvent;
-      print('key=$key');
+      _logger.info('key=$key');
       if (key is KeyDownEvent) {
         final keyLabel = key.logicalKey.keyLabel.toUpperCase();
 
         switch (keyLabel) {
           case 'I':
-            meterbloc.add(IgChangeEvent());
+            meterBloc.add(IgChangeEvent());
             break;
           case 'ARROW RIGHT':
-            meterbloc.add(WinkerRightEvent());
+            meterBloc.add(WinkerRightEvent());
             break;
           case 'ARROW LEFT':
-            meterbloc.add(WinkerLeftEvent());
+            meterBloc.add(WinkerLeftEvent());
             break;
           default:
             break;

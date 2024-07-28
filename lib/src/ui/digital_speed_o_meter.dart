@@ -5,18 +5,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meter/src/bloc/meter_main_bloc.dart';
 
 @immutable
-class DigitalSpeedOMeterPaint extends StatelessWidget {
-  const DigitalSpeedOMeterPaint(
+class DigitalSpeedOMeter extends StatelessWidget {
+  const DigitalSpeedOMeter(
       {super.key,
       required this.width,
       required this.height,
       required this.color,
-      required this.index});
+      required this.offset});
 
   final double width;
   final double height;
   final Color color;
-  final int index;
+  final Offset offset;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,11 @@ class DigitalSpeedOMeterPaint extends StatelessWidget {
             inputValues.add(false);
           }
         } else {
-          inputValues = state.digitalMeterInformation[index];
+          final innerStart = offset.dx.toInt();
+          inputValues = <bool>[];
+          for (int i = 0; i < 7; i++) {
+            inputValues.add(state.digitalMeterInformation[i + innerStart]);
+          }
         }
 
         return CustomPaint(
@@ -245,22 +249,25 @@ class DigitalMeterPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
 class DigitalSpeedOMeterDot extends StatelessWidget {
-  const DigitalSpeedOMeterDot({super.key});
+  const DigitalSpeedOMeterDot({super.key, required this.index});
+
+  final int index;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<MeterMainBloc, MeterMainState>(
-        buildWhen: (prev, cur) =>
-            prev.speedKmh != cur.speedKmh || prev.igON != cur.igON,
         builder: (context, state) {
-          return Icon(
-            Icons.circle,
-            color: state.igON ? Colors.green : Colors.black87,
-          );
-        });
+      final list = state.digitalMeterInformation;
+      return Icon(
+        Icons.circle,
+        color: (list.length > index && list[index])
+            ? Colors.green
+            : Colors.black87,
+      );
+    });
   }
 }
