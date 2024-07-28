@@ -11,3 +11,19 @@ void loggerSetup() {
         '[${rec.loggerName}] ${rec.level.name}: ${rec.time}: ${rec.message}');
   });
 }
+
+extension LoggeerEx on Logger {
+  String dump(List<bool> input) {
+    final buf = StringBuffer();
+    buf.write('[');
+    for (final e in input) {
+      if (e == true) {
+        buf.write('*');
+      } else {
+        buf.write(' ');
+      }
+    }
+    buf.write(']');
+    return buf.toString();
+  }
+}

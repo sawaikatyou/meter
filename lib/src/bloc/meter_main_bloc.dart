@@ -172,17 +172,6 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
       }
       count++;
 
-      final buf = StringBuffer();
-      buf.write('[');
-      for (final e in newInfo) {
-        if (e == true) {
-          buf.write('*');
-        } else {
-          buf.write(' ');
-        }
-      }
-      buf.write(']');
-
       emit(state.copyWith(
         digitalMeterInformation: newInfo,
       ));
