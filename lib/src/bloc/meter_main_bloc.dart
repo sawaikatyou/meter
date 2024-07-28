@@ -1,29 +1,54 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
 
-abstract class MeterEvent {}
+class MeterEvent implements Equatable {
+  @override
+  bool? get stringify => true;
 
-class _InitEvent extends MeterEvent {}
+  @override
+  List<Object?> get props => ['MeterEvent'];
+}
 
-class IgChangeEvent extends MeterEvent {}
+class _InitEvent extends MeterEvent {
+  @override
+  List<Object?> get props => ['_InitEvent'];
+}
 
-class WinkerRightEvent extends MeterEvent {}
+class IgChangeEvent extends MeterEvent {
+  @override
+  List<Object?> get props => ['IgChangeEvent'];
+}
 
-class WinkerLeftEvent extends MeterEvent {}
+class WinkerRightEvent extends MeterEvent {
+  @override
+  List<Object?> get props => ['WinkerRightEvent'];
+}
+
+class WinkerLeftEvent extends MeterEvent {
+  @override
+  List<Object?> get props => ['WinkerLeftEvent'];
+}
 
 class _InnerSpeedUpdated extends MeterEvent {
   _InnerSpeedUpdated(this.nextState);
 
   MeterMainState nextState;
+
+  @override
+  List<Object?> get props => [nextState];
 }
 
-class _InnerTestCounted extends MeterEvent {}
+class _InnerTestCounted extends MeterEvent {
+  @override
+  List<Object?> get props => ['_InnerTestCounted'];
+}
 
-class MeterMainState {
+class MeterMainState implements Equatable {
   const MeterMainState(
     this.speedKmh,
     this.igON,
@@ -53,6 +78,18 @@ class MeterMainState {
       digitalMeterInformation ?? this.digitalMeterInformation,
     );
   }
+
+  @override
+  List<Object?> get props => [
+        speedKmh,
+        igON,
+        winkerLeftOn,
+        winkerRightOn,
+        digitalMeterInformation,
+      ];
+
+  @override
+  bool? get stringify => true;
 }
 
 class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {

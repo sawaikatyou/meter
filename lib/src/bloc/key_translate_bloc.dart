@@ -7,11 +7,11 @@ import 'meter_main_bloc.dart';
 
 final _logger = Logger('KeyTranslateBloc');
 
-abstract class MeterEvent {}
+abstract class KeyTranslateEvent {}
 
-class _InitEvent extends MeterEvent {}
+class _InitEvent extends KeyTranslateEvent {}
 
-class HardwareKeyBoardEvent extends MeterEvent {
+class HardwareKeyBoardEvent extends KeyTranslateEvent {
   HardwareKeyBoardEvent(this.keyEvent);
 
   KeyEvent keyEvent;
@@ -21,10 +21,10 @@ class TranslateState {
   const TranslateState();
 }
 
-class KeyTranslateBloc extends Bloc<MeterEvent, TranslateState> {
-  final MeterMainBloc meterbloc;
+class KeyTranslateBloc extends Bloc<KeyTranslateEvent, TranslateState> {
+  final MeterMainBloc meterBloc;
 
-  KeyTranslateBloc(this.meterbloc) : super(const TranslateState()) {
+  KeyTranslateBloc(this.meterBloc) : super(const TranslateState()) {
     on<_InitEvent>((event, emit) {});
 
     on<HardwareKeyBoardEvent>((event, emit) {
@@ -35,13 +35,13 @@ class KeyTranslateBloc extends Bloc<MeterEvent, TranslateState> {
 
         switch (keyLabel) {
           case 'I':
-            meterbloc.add(IgChangeEvent());
+            meterBloc.add(IgChangeEvent());
             break;
           case 'ARROW RIGHT':
-            meterbloc.add(WinkerRightEvent());
+            meterBloc.add(WinkerRightEvent());
             break;
           case 'ARROW LEFT':
-            meterbloc.add(WinkerLeftEvent());
+            meterBloc.add(WinkerLeftEvent());
             break;
           default:
             break;
