@@ -1,9 +1,15 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meter/src/bloc/meter_main_bloc.dart';
 
+/// OFF表示の色
+const sToneDownColor = Colors.black87;
+
+/// OFF表示の[Paint] オブジェクト
+final sToneDownPaint = Paint()..color = sToneDownColor;
+
+///　デジタル表示を行うWidget
+/// [MeterMainState] の値に応じて挙動する
 @immutable
 class DigitalSpeedOMeter extends StatelessWidget {
   const DigitalSpeedOMeter(
@@ -13,9 +19,16 @@ class DigitalSpeedOMeter extends StatelessWidget {
       required this.color,
       required this.offset});
 
+  /// 画面横幅(point)
   final double width;
+
+  /// 画面縦幅(point)
   final double height;
+
+  /// ON表示の色
   final Color color;
+
+  /// [MeterMainState.digitalMeterInformation] のどこからどこまでを取得するか？
   final Offset offset;
 
   @override
@@ -45,9 +58,10 @@ class DigitalSpeedOMeter extends StatelessWidget {
   }
 }
 
+/// デバッグ用機能 デジタル表示の際の表示設定を指定する
 enum _GraphPaintSetting {
-  normal, // 通常設定 on,off 描画を使い分ける
-  translucent, // 描画しない
+  normal, // デフォルト on,off 描画を使い分ける
+  translucent, // 描画しない(透明)
   disable, // off描画
   color, // on描画
   rect, // Pathでなく rect で描画
@@ -82,13 +96,10 @@ class DigitalMeterPainter extends CustomPainter {
     _GraphPaintSetting.normal,
   ];
 
-  static final sToneDownPaint = Paint()..color = Colors.black87;
-
   /// 桁数の中で線を演算
   @override
   void paint(Canvas canvas, Size size) {
     final colorPaint = Paint()..color = color;
-    final toneDownPaint = Paint()..color = Colors.black87;
     final width = size.width;
     final height = size.height;
     final halfH = (height * 0.5);
@@ -230,10 +241,11 @@ class DigitalMeterPainter extends CustomPainter {
 
       switch (kEnabledSetting[i]) {
         case _GraphPaintSetting.normal:
-          canvas.drawPath(path!, values[i] ? colorPaint : toneDownPaint);
+          canvas.drawPath(path!, values[i] ? colorPaint : sToneDownPaint);
           break;
+        // coverage:ignore-start
         case _GraphPaintSetting.disable:
-          canvas.drawPath(path!, toneDownPaint);
+          canvas.drawPath(path!, sToneDownPaint);
           break;
         case _GraphPaintSetting.color:
           canvas.drawPath(path!, colorPaint);
@@ -244,18 +256,26 @@ class DigitalMeterPainter extends CustomPainter {
         case _GraphPaintSetting.translucent:
         default:
           break;
+        // coverage:ignore-end
       }
     }
   }
 
+// coverage:ignore-start
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
+// coverage:ignore-end
 }
 
 class DigitalSpeedOMeterDot extends StatelessWidget {
-  const DigitalSpeedOMeterDot({super.key, required this.index});
+  const DigitalSpeedOMeterDot({
+    super.key,
+    required this.index,
+    required this.color,
+  });
 
   final int index;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -266,7 +286,7 @@ class DigitalSpeedOMeterDot extends StatelessWidget {
         Icons.circle,
         color: (list.length > index && list[index])
             ? Colors.green
-            : Colors.black87,
+            : sToneDownColor,
       );
     });
   }

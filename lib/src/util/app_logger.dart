@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'package:flutter/cupertino.dart';
 import 'package:logging/logging.dart';
 

@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 enum Direction { left, top, right, bottom }
 
 @immutable
-class HalfRoundBackSheet extends StatelessWidget {
-  const HalfRoundBackSheet({super.key});
+class BackSheet extends StatelessWidget {
+  const BackSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +50,8 @@ class HalfCirclePainter extends CustomPainter {
         Rect.fromLTWH(0, size.height * 0.2, size.width, size.height), p);
   }
 
+// coverage:ignore-start
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+// coverage:ignore-end
 }

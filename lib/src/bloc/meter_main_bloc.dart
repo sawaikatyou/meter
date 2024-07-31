@@ -1,21 +1,18 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:equatable/equatable.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
 import 'package:logging/logging.dart';
+import 'package:meter/src/util/calc_util.dart';
+
+import '../util/environment_util.dart';
 
 final _logger = Logger('MeterMainBloc');
 
-class MeterEvent implements Equatable {
-  @override
-  bool? get stringify => true;
-
-  @override
-  List<Object?> get props => [];
-}
+@immutable
+class MeterEvent {}
 
 class _InitEvent extends MeterEvent {}
 
@@ -25,21 +22,15 @@ class WinkerRightEvent extends MeterEvent {}
 
 class WinkerLeftEvent extends MeterEvent {}
 
-class _InnerSpeedUpdated extends MeterEvent {
-  _InnerSpeedUpdated(this.nextState);
+class SpeedUpdated extends MeterEvent {
+  SpeedUpdated(this.speed);
 
-  MeterMainState nextState;
-
-  @override
-  List<Object?> get props => [super.props, nextState];
+  final double speed;
 }
 
-class _InnerTestCounted extends MeterEvent {
-  @override
-  List<Object?> get props => ['_InnerTestCounted'];
-}
+class _IlluminationUpdateEvent extends MeterEvent {}
 
-class MeterMainState implements Equatable {
+class MeterMainState extends Equatable {
   const MeterMainState(
     this.speedKmh,
     this.igON,
@@ -56,19 +47,18 @@ class MeterMainState implements Equatable {
 
   MeterMainState copyWith({
     double? speedKmh,
-    bool? igOn,
+    bool? igON,
     bool? winkerLeftOn,
     bool? winkerRightOn,
     List<bool>? digitalMeterInformation,
-  }) {
-    return MeterMainState(
-      speedKmh ?? this.speedKmh,
-      igOn ?? this.igON,
-      winkerLeftOn ?? this.winkerLeftOn,
-      winkerRightOn ?? this.winkerRightOn,
-      digitalMeterInformation ?? this.digitalMeterInformation,
-    );
-  }
+  }) =>
+      MeterMainState(
+        speedKmh ?? this.speedKmh,
+        igON ?? this.igON,
+        winkerLeftOn ?? this.winkerLeftOn,
+        winkerRightOn ?? this.winkerRightOn,
+        digitalMeterInformation ?? this.digitalMeterInformation,
+      );
 
   @override
   List<Object?> get props => [
@@ -80,104 +70,67 @@ class MeterMainState implements Equatable {
       ];
 
   @override
-  bool? get stringify => true;
+  bool? get stringify => false;
 }
 
 class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
-  final Location location = Location();
+  final location = Location();
   StreamSubscription<LocationData>? _locationSubscription;
 
-  static const kDigitsCount = 4;
-  static const kOneDigitValues = 7;
-  static const kDecimalPoint = 1;
+  /// デバッグモード 順番点灯モード
+  static const kDebugIlluminationMode = false;
 
-  static const kDigitalInformationMax =
-      (kDigitsCount * kOneDigitValues) + kDecimalPoint;
+  /// デジタルパネル部の最大長
+  static const kDigitalInformationMax = (4 * 7) + 1;
 
+  /// 全消灯パターン
   static const kPatternOff = [false, false, false, false, false, false, false];
-  static const kPattern0 = [true, true, true, false, true, true, true];
-  static const kPattern1 = [false, false, true, false, false, true, false];
-  static const kPattern2 = [true, false, true, true, true, false, true];
-  static const kPattern3 = [true, false, true, true, false, true, true];
-  static const kPattern4 = [false, true, true, true, false, true, false];
-  static const kPattern5 = [true, true, false, true, false, true, true];
-  static const kPattern6 = [true, true, false, true, true, true, true];
-  static const kPattern7 = [true, true, true, false, false, true, false];
-  static const kPattern8 = [true, true, true, true, true, true, true];
-  static const kPattern9 = [true, true, true, true, false, true, true];
 
-  // 100の桁を取得
-  int fetchOne(double speedKmh) {
-    var temp = speedKmh;
-    if (speedKmh < 100) {
-      return -1;
-    }
-    if (speedKmh > 1000) {
-      temp = speedKmh % 1000;
-    }
-    return (temp / 100).toInt();
-  }
+  static const Map<int, List<bool>> kNumberPatternMap = {
+    0: [true, true, true, false, true, true, true],
+    1: [false, false, true, false, false, true, false],
+    2: [true, false, true, true, true, false, true],
+    3: [true, false, true, true, false, true, true],
+    4: [false, true, true, true, false, true, false],
+    5: [true, true, false, true, false, true, true],
+    6: [true, true, false, true, true, true, true],
+    7: [true, true, true, false, false, true, false],
+    8: [true, true, true, true, true, true, true],
+    9: [true, true, true, true, false, true, true],
+  };
 
-  // 10の桁を取得
-  int fetchTwo(double speedKmh) {
-    var temp = speedKmh;
-    if (speedKmh < 10) {
-      return -1;
-    }
-    if (speedKmh > 100) {
-      temp = speedKmh % 100;
-    }
-    return (temp / 10).toInt();
-  }
-
-  // 1の桁を取得
-  int fetchThree(double speedKmh) {
-    var temp = speedKmh;
-    if (speedKmh > 10) {
-      temp = speedKmh % 10;
-    }
-    return temp.toInt();
-  }
-
-  // 小数点の1桁目を取得
-  int fetchMinor(double speedKmh) {
-    var temp = speedKmh;
-    if (speedKmh > 1) {
-      temp = speedKmh % 1;
-    }
-    temp = (temp * 10.0);
-    return temp.ceil().toInt();
-  }
+  /// オブジェクト初期値
+  static const kStateInit = MeterMainState(0.0, false, false, false, [
+    ...kPatternOff, // 100の桁
+    ...kPatternOff, // 10の桁
+    ...kPatternOff, // 1の桁
+    false, // ドット
+    ...kPatternOff // 小数点1桁
+  ]);
 
   List<bool> makeInformation({double input = 0.0}) {
     final result = <bool>[];
-    final value100 = fetchOne(input);
-    final value010 = fetchTwo(input);
-    final value001 = fetchThree(input);
-    final valueDot = fetchMinor(input);
-    final Map<int, List<bool>> parameters = {
-      0: kPattern0,
-      1: kPattern1,
-      2: kPattern2,
-      3: kPattern3,
-      4: kPattern4,
-      5: kPattern5,
-      6: kPattern6,
-      7: kPattern7,
-      8: kPattern8,
-      9: kPattern9,
-    };
-
-    result.addAll(parameters[value100] ?? kPatternOff);
-    result.addAll(parameters[value010] ?? kPatternOff);
-    result.addAll(parameters[value001] ?? kPatternOff);
+    result.addAll(kNumberPatternMap[fetch100(input)] ?? kPatternOff);
+    result.addAll(kNumberPatternMap[fetch010(input)] ?? kPatternOff);
+    result.addAll(kNumberPatternMap[fetch001(input)] ?? kPatternOff);
     result.add(true);
-    result.addAll(parameters[valueDot] ?? kPatternOff);
+    result.addAll(kNumberPatternMap[fetchMinor(input)] ?? kPatternOff);
 
     return result;
   }
 
-  MeterMainBloc() : super(const MeterMainState(0.0, false, false, false, [])) {
+  /// 全パネル点灯／消灯
+  List<bool> fillInformation({required bool input}) {
+    List<bool> result = [];
+
+    for (int i = 0; i < kDigitalInformationMax; i++) {
+      result.add(input);
+    }
+
+    return result;
+  }
+
+  MeterMainBloc({MeterMainState? init}) : super(init ?? kStateInit) {
     on<_InitEvent>((event, emit) {
       // speed 監視
       _locationSubscription =
@@ -187,78 +140,64 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
         final speedMps = currentLocation.speed;
         if (speedMps != null) {
           final speedKmh = (speedMps * 3600) / 1000;
-          final info = makeInformation(input: speedKmh);
-
-          _logger.info('speedKmh=$speedKmh');
-
-          add(_InnerSpeedUpdated(state.copyWith(
-            speedKmh: speedKmh,
-            digitalMeterInformation: info,
-          )));
+          _logger.info('fetch speed. speedKmh=$speedKmh');
+          add(SpeedUpdated(speedKmh));
         }
       });
+      _logger.info('init completed.');
     });
 
-    // TODO: 現状は単に ig on / off で全部つけてるだけ
-    List<bool> fillInformation({bool? newValue}) {
-      bool value = newValue ?? state.igON;
-      List<bool> result = [];
+    on<SpeedUpdated>((event, emit) {
+      if (state.igON && !kDebugIlluminationMode) {
+        final nextSpeed = event.speed;
+        final info = makeInformation(input: nextSpeed);
 
-      for (int i = 0; i < kDigitalInformationMax; i++) {
-        result.add(value);
+        emit(
+          state.copyWith(
+            speedKmh: nextSpeed,
+            digitalMeterInformation: info,
+          ),
+        );
       }
-
-      return result;
-    }
-
-    on<_InnerSpeedUpdated>((event, emit) {
-      emit(
-        state.copyWith(
-          speedKmh: event.nextState.speedKmh,
-          digitalMeterInformation: event.nextState.digitalMeterInformation,
-        ),
-      );
     });
 
-    on<WinkerLeftEvent>((event, emit) {
-      emit(
-        state.copyWith(
-          winkerLeftOn: !state.winkerLeftOn,
-        ),
-      );
-    });
+    on<WinkerLeftEvent>((event, emit) =>
+        emit(state.copyWith(winkerLeftOn: !state.winkerLeftOn)));
 
-    on<WinkerRightEvent>((event, emit) {
-      emit(
-        state.copyWith(
-          winkerRightOn: !state.winkerRightOn,
-        ),
-      );
-    });
+    on<WinkerRightEvent>((event, emit) =>
+        emit(state.copyWith(winkerRightOn: !state.winkerRightOn)));
 
     on<IgChangeEvent>((event, emit) {
       final igonNewStatus = !state.igON;
       emit(state.copyWith(
-        igOn: igonNewStatus,
-        digitalMeterInformation: fillInformation(newValue: igonNewStatus),
+        igON: igonNewStatus,
+        digitalMeterInformation: fillInformation(input: false),
       ));
 
-      if (igonNewStatus) {
-        timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-          add(_InnerTestCounted());
-        });
-      } else {
-        timer?.cancel();
-        count = 0;
+      // coverage:ignore-start
+      // この処理は正規の作り込みでないので、テストは不要
+      // IGON中はデジタルメーターの各パネルを点灯させる
+      if (!isUnitTestMode() && kDebugIlluminationMode) {
+        if (igonNewStatus) {
+          timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+            add(_IlluminationUpdateEvent());
+          });
+        } else {
+          timer?.cancel();
+          count = 0;
+        }
       }
+      // coverage:ignore-end
     });
 
-    on<_InnerTestCounted>((event, emit) {
-      var newInfo = state.digitalMeterInformation;
+// coverage:ignore-start
+// デバッグ点灯モードの処理は正規の作り込みでないので、テストは不要
+    on<_IlluminationUpdateEvent>((event, emit) {
+      List<bool> newInfo = <bool>[...state.digitalMeterInformation];
 
       if (count > kDigitalInformationMax - 1) {
         count = 0;
-        newInfo = fillInformation(newValue: false);
+        newInfo = fillInformation(input: false);
       }
       newInfo[count] = true;
       if (count > 0) {
@@ -269,11 +208,15 @@ class MeterMainBloc extends Bloc<MeterEvent, MeterMainState> {
       emit(state.copyWith(
         digitalMeterInformation: newInfo,
       ));
+      // _logger.info('_InnerTestCounted newInfo=${_logger.dump(newInfo)}');
     });
+// coverage:ignore-end
 
     add(_InitEvent());
   }
 
+// coverage:ignore-start
   Timer? timer;
   int count = 0;
+// coverage:ignore-end
 }
