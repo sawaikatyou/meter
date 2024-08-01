@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:location/location.dart';
 import 'package:logging/logging.dart';
 import 'package:meter/src/bloc/key_translate_bloc.dart';
 import 'package:meter/src/bloc/meter_main_bloc.dart';
@@ -34,6 +35,15 @@ class MeterMainScreen extends StatefulWidget {
 class MeterMainScreenState extends State<MeterMainScreen> {
   static const kWinkerSize = 48.0;
   final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    final location = Location();
+    location.requestPermission().then((result) {
+      _logger.info('requestPermission result=$result');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +149,7 @@ class MeterMainScreenState extends State<MeterMainScreen> {
 
                     // IG-ON / off label
                     Positioned(
-                      left: screenSize.width - (isUnitTestMode() ? 100 : 60),
+                      left: screenSize.width - (isUnitTestMode() ? 100 : 80),
                       top: screenSize.height - (isUnitTestMode() ? 70 : 35),
                       child: BlocBuilder<MeterMainBloc, MeterMainState>(
                         buildWhen: (before, current) =>
@@ -171,18 +181,26 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                     Positioned(
                       left: rightWinkerPosition,
                       top: kWinkerTopBaseLine,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: state.winkerRightOn
-                              ? Colors.white
-                              : Colors.black26,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.arrow_forward_outlined,
+                      child: GestureDetector(
+                        key: const ValueKey('winker_right'),
+                        onTap: () {
+                          _logger.info('tap winker_right');
+                          BlocProvider.of<MeterMainBloc>(context)
+                              .add(WinkerRightEvent());
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
                             color: state.winkerRightOn
-                                ? Colors.green
-                                : Colors.black,
-                            size: kWinkerSize),
+                                ? Colors.white
+                                : Colors.black26,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.arrow_forward_outlined,
+                              color: state.winkerRightOn
+                                  ? Colors.green
+                                  : Colors.black,
+                              size: kWinkerSize),
+                        ),
                       ),
                     ),
 
@@ -190,18 +208,26 @@ class MeterMainScreenState extends State<MeterMainScreen> {
                     Positioned(
                       left: leftWinkerPosition,
                       top: kWinkerTopBaseLine,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: state.winkerLeftOn
-                              ? Colors.white
-                              : Colors.black26,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.arrow_back_outlined,
+                      child: GestureDetector(
+                        key: const ValueKey('winker_left'),
+                        onTap: () {
+                          _logger.info('tap winker_left');
+                          BlocProvider.of<MeterMainBloc>(context)
+                              .add(WinkerLeftEvent());
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
                             color: state.winkerLeftOn
-                                ? Colors.green
-                                : Colors.black,
-                            size: kWinkerSize),
+                                ? Colors.white
+                                : Colors.black26,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.arrow_back_outlined,
+                              color: state.winkerLeftOn
+                                  ? Colors.green
+                                  : Colors.black,
+                              size: kWinkerSize),
+                        ),
                       ),
                     ),
                   ],
